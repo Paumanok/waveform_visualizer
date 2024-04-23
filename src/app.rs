@@ -23,7 +23,7 @@ impl Default for VisualizerApp {
         Self {
             // Example stuff:
             label: "Hello World!".to_owned(),
-            value: 2.7,
+            value: 8_000.0,
             path: "".to_string(),
             load_file: true,
             plot_handles: Default::default(),
@@ -52,10 +52,6 @@ impl eframe::App for VisualizerApp {
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.add(egui::Slider::new(&mut self.value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                self.value += 1.0;
-            }
 
             ui.separator();
             if self.load_file {
@@ -86,7 +82,7 @@ impl eframe::App for VisualizerApp {
                     .wav_util
                     .as_mut()
                     .expect("couldn't get it")
-                    .get_fft()
+                    .get_fft(self.value as f64)
                     .into();
                 let line2 = Line::new(fft);
                 let resp = Plot::new("my_fft")
@@ -100,6 +96,8 @@ impl eframe::App for VisualizerApp {
                     });
             }
             ui.separator();
+            ui.style_mut().spacing.slider_width = (300.0);
+            ui.add(egui::Slider::new(&mut self.value, 0.0..=24_000.0).text("Max frequency").smallest_positive(50.0));
         });
     }
 }
