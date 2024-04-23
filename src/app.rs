@@ -82,9 +82,27 @@ impl eframe::App for VisualizerApp {
                             .set_range(plot_ui.plot_bounds().min(), plot_ui.plot_bounds().max());
                         plot_ui.line(line)
                     });
-                self.plot_handles.push(resp);
+                let fft: PlotPoints = self
+                    .wav_util
+                    .as_ref()
+                    .expect("couldn't get it")
+                    .get_fft()
+                    .into();
+                let line2 = Line::new(fft);
+                let resp = Plot::new("my_fft")
+                    .view_aspect(3.0)
+                    .allow_drag(false)
+                    .allow_zoom(Vec2b::new(true, false))
+                    .allow_scroll(Vec2b::new(true, false))
+                    .clamp_grid(true)
+                    .show(ui, |plot_ui| {
+                        plot_ui.line(line2)
+                    });
             }
             ui.separator();
+            if ui.button("calc fft").clicked() {
+                self.wav_util.as_ref().expect("couldn't get wave util").get_fft();
+            }
         });
     }
 }
