@@ -1,18 +1,22 @@
 use hound::{WavReader, WavSpec};
 use std::iter::zip;
-use rustfft::{FftPlanner, num_complex::Complex};
+use rustfft::{num_complex::{Complex, Complex32}, FftPlanner};
 //do
 //
 
 pub struct WaveUtil {
     //contents: Vec<[f64; 2]>,
     contents: Vec<i16>,
+    fft: Vec<Complex32>,
     spec: WavSpec,
     //these represent the window we can see
     //use these for lazy loading and
     //determining skip
     pub min: [f64; 2],
     pub max: [f64; 2],
+    last_min_x: usize,
+    last_max_x: usize,
+    pub changed: bool
 }
 
 impl WaveUtil {
@@ -20,15 +24,22 @@ impl WaveUtil {
         let (contents, spec) = load_wav(input_file);
         Self {
             contents,
+            fft: Default::default(),
             spec,
             min: Default::default(),
             max: Default::default(),
+            last_min_x: 0,
+            last_max_x: 9,
+            changed: false,
         }
     }
 
     pub fn set_range(&mut self, min: [f64; 2], max: [f64; 2]) {
-        self.min = min;
-        self.max = max;
+        if self.last_min_x != min[0] as usize || self.last_max_x != max[0] as usize {
+            self.changed = true;
+            self.min = min;
+            self.max = max;
+        }
     }
     pub fn get_window_range( &self) -> (usize, usize) {
 
@@ -56,11 +67,11 @@ impl WaveUtil {
         }
         let step = match n_samples {
             x if x > 50_000 => 10,
-            x if x > 10_000 => 5,
+            x if x > 10_000 => 4,
             _ => 1,
         };
 
-        println!("start: {:} end: {:} skip: {:}", min, max, step);
+        println!("start: {:} end: {:} size: {:} skip: {:}", min, max,max-min, step);
         zip(
             (min..max).map(|i| i as f64),
             self.contents.clone().into_iter().skip(min).map(|s| s as f64),
@@ -70,7 +81,8 @@ impl WaveUtil {
         .collect()
     }
 
-    pub fn get_fft(&self) -> Vec<[f64; 2]> {
+    fn calc_fft(&self)-> Vec<Complex32> {
+
         let (min, max) = self.get_window_range();
         let size = max-min;
 
@@ -80,16 +92,26 @@ impl WaveUtil {
         let mut buffer = vec![Complex{ re: 0.0f32, im: 0.0f32 }; size];
         buffer = subvec.into_iter().map(|s| Complex{re: s as f32, im: 0.0f32}).collect();
         fft.process(&mut buffer);
+        buffer
+    }
+
+    pub fn get_fft(&mut self) -> Vec<[f64; 2]> {
        
+        let (min, max) = self.get_window_range();
+        let size = max-min;
 
-        //println!("{:?}", buffer);
-
+        println!("{:?}", size/2 -1);
+        
+        if self.changed {
+            self.fft = self.calc_fft();
+        }
 
         zip(
-            (min..max).map(|i| i as f64),
-            buffer.into_iter().skip(min).map(|s| s.re as f64),
+            (0..(size/2 -1)).map(|i| i as f64 * self.spec.sample_rate as f64 / size as f64),
+            self.fft.clone().into_iter().map(|s| s.re as f64),
         )
         .map(|z| [z.0, z.1])
+        .step_by(10)
         .collect()
 
     }

@@ -84,7 +84,7 @@ impl eframe::App for VisualizerApp {
                     });
                 let fft: PlotPoints = self
                     .wav_util
-                    .as_ref()
+                    .as_mut()
                     .expect("couldn't get it")
                     .get_fft()
                     .into();
@@ -100,9 +100,6 @@ impl eframe::App for VisualizerApp {
                     });
             }
             ui.separator();
-            if ui.button("calc fft").clicked() {
-                self.wav_util.as_ref().expect("couldn't get wave util").get_fft();
-            }
         });
     }
 }
