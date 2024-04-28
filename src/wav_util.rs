@@ -1,11 +1,12 @@
+//terribly named file awaiting refactoring
+//opens the wav file into a buffer
+//
+
 use hound::{WavReader, WavSpec};
 use std::iter::zip;
 use rustfft::{num_complex::{Complex, Complex32}, FftPlanner};
-//do
-//
 
 pub struct WaveUtil {
-    //contents: Vec<[f64; 2]>,
     contents: Vec<i16>,
     fft: Vec<Complex32>,
     spec: WavSpec,
@@ -14,8 +15,6 @@ pub struct WaveUtil {
     //determining skip
     pub min: [f64; 2],
     pub max: [f64; 2],
-    last_min_x: usize,
-    last_max_x: usize,
     pub changed: bool
 }
 
@@ -28,8 +27,6 @@ impl WaveUtil {
             spec,
             min: Default::default(),
             max: Default::default(),
-            last_min_x: 0,
-            last_max_x: 9,
             changed: false,
         }
     }
@@ -100,6 +97,8 @@ impl WaveUtil {
         let mut buffer = vec![Complex{ re: 0.0f32, im: 0.0f32 }; size];
         buffer = subvec.into_iter().map(|s| Complex{re: s as f32, im: 0.0f32}).collect();
         fft.process(&mut buffer);
+        
+
         buffer
     }
 
@@ -120,6 +119,7 @@ impl WaveUtil {
             self.fft = self.calc_fft();
             self.changed = false;
         }
+        //[freq, real_component]
         let ret: Vec<_> = zip(
             (0..end).map(|i| i as f64 * self.spec.sample_rate as f64 / size as f64),
             self.fft.clone().into_iter().map(|s| s.re as f64),
@@ -127,6 +127,11 @@ impl WaveUtil {
         .map(|z| [z.0, z.1])
         .step_by(10)
         .collect();
+
+        let peaks = find_peaks(ret.iter().map(|x| x[1]).collect());
+        for peak in peaks {
+            calc_note(ret[peak+1][0]);
+        }
         //println!("ret len: {:}", ret[ret.len()-1][0]);
         ret
 
@@ -142,5 +147,47 @@ pub fn load_wav(path: String) -> (Vec<i16>, WavSpec) {
         reader.samples::<i16>().map(|s| s.unwrap()).collect(),
         reader.spec(),
     )
+}
+
+pub fn find_peaks(buffer: Vec<f64>) -> Vec<usize> {
+    
+    let mut window = [0.0_f64; 2];
+    let mut peaks = Vec::new();
+    window[0] = buffer[0];
+    window[1] = buffer[1];
+
+    let mut max = 0.0;
+
+    for sample in &buffer {
+        if sample.abs() > max {
+            max = sample.abs();
+        }
+    }
+    println!("max: {:}", max);
+    for (i,sample) in buffer.iter().skip(2).enumerate() {
+        if window[0] < window[1] && sample.abs() < window[1] {
+            if window[1] > max * 0.20 {
+                peaks.push(i);
+            }
+        }
+        window[0] = window[1];
+        window[1] = sample.abs();
+    }
+    for peak in &peaks {
+        println!("[{:?}, {:?}]", peak, buffer[*peak+1].abs()); 
+
+    }
+    peaks
+}
+
+pub fn calc_note(freq: f64)  {
+    let notes = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
+    // solving for N steps above note: 55Hz
+    // where f = note * 2 ^(N/12)
+    let steps = (12.0 * (freq.abs() / 55.0).log10() / 2.0f64.log10()).round() as usize;
+
+    println!("Note freq: {:}, Note: {:},  steps above 55Hz {:}", freq,  notes[steps % 12],steps);
+
+
 }
 
