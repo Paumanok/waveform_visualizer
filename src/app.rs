@@ -78,6 +78,9 @@ impl eframe::App for VisualizerApp {
                             .set_range(plot_ui.plot_bounds().min(), plot_ui.plot_bounds().max());
                         plot_ui.line(line)
                     });
+                
+                ui.separator();
+                
                 let fft: PlotPoints = self
                     .wav_util
                     .as_mut()
@@ -95,7 +98,6 @@ impl eframe::App for VisualizerApp {
                         plot_ui.line(line2)
                     });
             }
-            ui.separator();
             ui.style_mut().spacing.slider_width = (300.0);
             ui.add(egui::Slider::new(&mut self.value, 0.0..=24_000.0).text("Max frequency").smallest_positive(50.0));
         });
