@@ -77,7 +77,8 @@ impl FftTransform {
     pub fn display(&mut self, f_max: f32, pcm: &mut PCM, ui: &mut egui::Ui) {
         let line = Line::new(self.get_fft(f_max as f64, pcm));
         Plot::new("fft")
-            .view_aspect(3.0)
+            //.view_aspect(3.0)
+            .height(300.0)
             .allow_drag(false)
             .allow_zoom(Vec2b::new(true, false))
             .allow_scroll(Vec2b::new(true, false))
@@ -105,10 +106,8 @@ pub fn find_peaks(buffer: Vec<f64>) -> Vec<usize> {
     }
     println!("max: {:}", max);
     for (i, sample) in buffer.iter().skip(2).enumerate() {
-        if window[0] < window[1] && sample.abs() < window[1] {
-            if window[1] > max * 0.20 {
-                peaks.push(i);
-            }
+        if window[0] < window[1] && sample.abs() < window[1] && window[1] > max * 0.20  {
+            peaks.push(i);
         }
         window[0] = window[1];
         window[1] = sample.abs();

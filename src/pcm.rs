@@ -97,7 +97,8 @@ impl PCM {
         let line = Line::new(self.get_samples());
         let sr = self.sample_rate as f64;        
         Plot::new("my_plot2")
-            .view_aspect(3.0)
+            //.view_aspect(3.0)
+            .height(300.0)
             .allow_drag(false)
             .allow_zoom(Vec2b::new(true, false))
             .allow_scroll(Vec2b::new(true, false))
