@@ -21,7 +21,7 @@ impl Default for VisualizerApp {
         Self {
             // Example stuff:
             label: "Hello World!".to_owned(),
-            value: 8_000.0,
+            value: 2_000.0,
             path: "".to_string(),
             load_file: true,
             pcm: None,
@@ -52,12 +52,14 @@ impl eframe::App for VisualizerApp {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.separator();
             if self.load_file {
+                ui.vertical_centered(|ui| {ui.label("Amplitude Plot")});
                 if let Some(pcm) = &mut self.pcm {
                     pcm.display(ui);
                 }
 
                 ui.separator();
 
+                ui.vertical_centered(|ui| {ui.label("FFT")});
                 if let Some(pcm) = &mut self.pcm {
                     if let Some(fft) = &mut self.fft {
                         fft.display(self.value, pcm, ui);
@@ -70,6 +72,9 @@ impl eframe::App for VisualizerApp {
                     .text("Max frequency")
                     .smallest_positive(50.0),
             );
+            ui.vertical_centered(|ui| { 
+                ui.label("Zoom amplitude plot to focus FFT window")
+            });
         });
     }
 }

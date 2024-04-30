@@ -1,5 +1,5 @@
 use egui::Vec2b;
-use egui_plot::{Line, Plot};
+use egui_plot::{Legend, Line, Plot};
 use hound::{WavReader, WavSpec};
 use std::iter::zip;
 
@@ -30,6 +30,9 @@ impl PCM {
             self.changed = true;
             self.min = min;
             self.max = max;
+        }
+        else {
+            self.changed = false;
         }
     }
     /// Get min x axis index of window
@@ -70,13 +73,13 @@ impl PCM {
             _ => 1,
         };
 
-        println!(
-            "start: {:} end: {:} size: {:} skip: {:}",
-            min,
-            max,
-            max - min,
-            step
-        );
+        //println!(
+        //    "start: {:} end: {:} size: {:} skip: {:}",
+        //    min,
+        //    max,
+        //    max - min,
+        //    step
+        //);
         zip(
             (min..max).map(|i| i as f64),
             self.contents
@@ -92,14 +95,24 @@ impl PCM {
 
     pub fn display(&mut self, ui: &mut egui::Ui) {
         let line = Line::new(self.get_samples());
+        let sr = self.sample_rate as f64;        
         Plot::new("my_plot2")
             .view_aspect(3.0)
             .allow_drag(false)
             .allow_zoom(Vec2b::new(true, false))
             .allow_scroll(Vec2b::new(true, false))
             .clamp_grid(true)
+            .x_axis_label("Time (m:s:ms)") 
+            .y_axis_label("PCM value")
+            .x_axis_formatter(move |gm, size, range|
+                format!("{:?}:{:?}:{:?}",
+                    ((gm.value / sr ) / 60.0) as u32,
+                    (gm.value / sr) as u32,
+                    ((gm.value / sr) % 1.0 * 1000.0) as u32)
+            ) //minute:second:milisecond
+                //-> sample/sr/
             .show(ui, |plot_ui| {
-                println!("bounds: {:?}", plot_ui.plot_bounds());
+                //println!("bounds: {:?}", plot_ui.plot_bounds());
                 self.set_range(plot_ui.plot_bounds().min(), plot_ui.plot_bounds().max());
                 plot_ui.line(line)
             });

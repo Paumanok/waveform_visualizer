@@ -44,7 +44,7 @@ impl FftTransform {
         let (min, max) = pcm.get_window_range();
         let size = max - min;
 
-        println!("{:?}", size / 2 - 1);
+        //println!("{:?}", size / 2 - 1);
 
         let max_i = size / 2 - 1;
         //let f_max = 10_000.0;
@@ -54,7 +54,7 @@ impl FftTransform {
 
         if pcm.changed {
             self.calc_fft(pcm);
-            pcm.changed = false;
+            //pcm.changed = false;
         }
         //[freq, real_component]
         let ret: Vec<_> = zip(
@@ -64,10 +64,11 @@ impl FftTransform {
         .map(|z| [z.0, z.1])
         .step_by(10)
         .collect();
-
-        let peaks = find_peaks(ret.iter().map(|x| x[1]).collect());
-        for peak in peaks {
-            calc_note(ret[peak + 1][0]);
+        if pcm.changed {
+            let peaks = find_peaks(ret.iter().map(|x| x[1]).collect());
+            for peak in peaks {
+                calc_note(ret[peak + 1][0]);
+            }
         }
         //println!("ret len: {:}", ret[ret.len()-1][0]);
         ret
@@ -81,8 +82,9 @@ impl FftTransform {
             .allow_zoom(Vec2b::new(true, false))
             .allow_scroll(Vec2b::new(true, false))
             .clamp_grid(true)
+            .x_axis_label("Frequency (Hz)")
             .show(ui, |plot_ui| {
-                println!("bounds: {:?}", plot_ui.plot_bounds());
+                //println!("bounds: {:?}", plot_ui.plot_bounds());
                 plot_ui.line(line)
             });
     }
