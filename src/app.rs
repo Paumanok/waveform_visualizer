@@ -63,6 +63,9 @@ impl eframe::App for VisualizerApp {
                 if let Some(pcm) = &mut self.pcm {
                     if let Some(fft) = &mut self.fft {
                         fft.display(self.value, pcm, ui);
+                        ui.vertical_centered(|ui| {
+                            ui.label(format!("Notes: {:}", fft.get_notes(pcm).join(", "))) 
+                        });
                     }
                 }
             }

@@ -1,5 +1,5 @@
 use egui::Vec2b;
-use egui_plot::{Legend, Line, Plot};
+use egui_plot::{ Line, Plot};
 use hound::{WavReader, WavSpec};
 use std::iter::zip;
 
@@ -19,7 +19,7 @@ impl PCM {
             sample_rate: spec.sample_rate,
             min: Default::default(),
             max: Default::default(),
-            changed: false,
+            changed: true,
         }
     }
     /// Update window range
@@ -68,18 +68,19 @@ impl PCM {
             max = self.contents.len();
         }
         let step = match n_samples {
-            x if x > 50_000 => 10,
-            x if x > 10_000 => 4,
+            x if x > 50_000 => 20,
+            x if x > 10_000 => 10,
             _ => 1,
         };
-
-        //println!(
-        //    "start: {:} end: {:} size: {:} skip: {:}",
-        //    min,
-        //    max,
-        //    max - min,
-        //    step
-        //);
+        if self.changed {
+        println!(
+            "start: {:} end: {:} size: {:} step: {:}",
+            min,
+            max,
+            max - min,
+            step
+        );
+        }
         zip(
             (min..max).map(|i| i as f64),
             self.contents
@@ -94,6 +95,8 @@ impl PCM {
     }
 
     pub fn display(&mut self, ui: &mut egui::Ui) {
+        //let samples = self.get_samples();
+        //println!("sample len: {:}", samples.len());
         let line = Line::new(self.get_samples());
         let sr = self.sample_rate as f64;        
         Plot::new("my_plot2")
@@ -105,7 +108,7 @@ impl PCM {
             .clamp_grid(true)
             .x_axis_label("Time (m:s:ms)") 
             .y_axis_label("PCM value")
-            .x_axis_formatter(move |gm, size, range|
+            .x_axis_formatter(move |gm, _size, _range|
                 format!("{:?}:{:?}:{:?}",
                     ((gm.value / sr ) / 60.0) as u32,
                     (gm.value / sr) as u32,
