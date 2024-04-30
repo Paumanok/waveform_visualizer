@@ -2,4 +2,4 @@ This repository is mostly serving as a scratch pad for ideas prior to properly i
 
 I also wanted to play around with making a gui app for a change.
 
-[Single note detection](images/Single_note.png)
+![Single note detection](images/Single_note.png)
